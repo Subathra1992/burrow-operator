@@ -17,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	monitorsv1beta1 "burrow-operator/pkg/apis/monitors/v1beta1"
-	"github.com/pelletier/go-toml"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -163,23 +162,23 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	configMap := &corev1.ConfigMap{}
 	configMap.APIVersion = "v1"
 	configMap.Kind = "ConfigMap"
-	configMap.Name = "config"
+	configMap.Name = "burrow-config"
 	configMap.Namespace = instance.Namespace
 
-
-	tl, _ := toml.LoadFile("template/burrow.toml")
+	/*tl, _ := toml.LoadFile("template/burrow.toml")
 
 	data := make(map[string]string)
 
 	for k, v := range tl.ToMap() {
 		data[k] = v.(string)
-	}
-	configMap.Data=data
+	}*/
+	configMap.Data = map[string]string{}
+
+	//log.Printf("", configMap.Data)
 
 	//ts, ok := configMap.Data["template"]
 
 	//configMap.BinaryData= map[string][]byte{}
-
 
 	//bc := BuildConfigMap()
 	//fmt.Printf("err: %v\n", bc)
@@ -199,9 +198,9 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	found_cm := &corev1.ConfigMap{}
-	err = r.Get(context.TODO(), types.NamespacedName{Name: "config", Namespace: configMap.Namespace}, found_cm)
+	err = r.Get(context.TODO(), types.NamespacedName{Name: "burrow-config", Namespace: configMap.Namespace}, found_cm)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating configMap %s/%s\n", configMap.Namespace, "config")
+		log.Printf("Creating configMap %s/%s\n", configMap.Namespace, "burrow-config")
 		err = r.Create(context.TODO(), configMap)
 		if err != nil {
 			return reconcile.Result{}, err
@@ -233,27 +232,45 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "burrow-exporter",
-							Image: instance.Spec.ExporterImage,
-						},
-						{
 							Name:  "burrow-image",
 							Image: instance.Spec.BurrowImage,
+							VolumeMounts: []corev1.VolumeMount{{
+								Name:      "config",
+								MountPath: "/etc/burrow/config",
+							},
+							},
 						},
-					},
-					VolumeMounts: []corev1.VolumeMount{
 						{
-							Name:    "BurrowConfig",
-							SubPath: "v1.BurrowDeploymentSpec{}." + ".toml",
+							Name:  "burrow-exporter",
+							Image: instance.Spec.ExporterImage,
+							Env: []corev1.EnvVar{{
+								Name:  "BURROW_ADDR",
+								Value: "http://localhost:8000",
+							},
+								{
+									Name:  "METRICS_ADDR",
+									Value: "0.0.0.0:8080",
+								},
+								{
+									Name:  "INTERVAL",
+									Value: "15",
+								},
+
+								{
+									Name:  "API_VERSION",
+									Value: "3",
+								},
+							},
 						},
 					},
+
 					Volumes: []corev1.Volume{
 						{
-							Name: "BurrowConfig",
+							Name: "config",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 
-									LocalObjectReference: corev1.LocalObjectReference{Name: DeploymentName},
+									LocalObjectReference: corev1.LocalObjectReference{Name: "burrow-config"},
 								},
 							},
 						},
@@ -341,83 +358,11 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 
 }
 
-/*func LoadConfig(configFile string) (*Burrow, error) {
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		return nil, ge.New("Config file does not exist.")
-	} else if err != nil {
-		return nil, err
-	}
-
-	var conf Burrow
-	if _, err := toml.DecodeFile(configFile, &conf); err != nil {
-		return nil, err
-	}
-
-	return &conf, nil
-}*/
-
-func BuildConfigMap() (*corev1.ConfigMap) {
-
-	/*tempcm := &Burrow{}
-
-	reflect.TypeOf(tempcm)
-	cmv := reflect.ValueOf(tempcm)
-	bc := monitorsv1beta1.BurrowSpec{}
-	crt := reflect.TypeOf(bc)
-	crv := reflect.ValueOf(bc)
-
-	//log.Printf("", cmt, cmv, crt, crv)
-
-	for i := 0; i < crv.NumField(); i++ {
-
-		cmv.FieldByName(crt.Field(i).Name).MapIndex(crv.Field(i))
-
-	}
-
-	log.Print(cmv)
-	return tempcm*/
-
-	/*jsonFile, err := os.Open("template/burrow.json")
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var result map[string]interface{}
-	json.Unmarshal([]byte(byteValue), &result)
-	fmt.Println("configmap", result)
-	cm.Data=result
-
-
-*/
-	/*tempcm := &Burrow{}
-	if file != nil {
-		if _, err := toml.DecodeReader("template/burrow-configmap.yaml", &tempcm); err != nil {
-			fileErr = fmt.Errorf("decode config: %v", err)
-		}
-	}
-*/
-
-
-/*config, _ := toml.LoadFile("template/burrow.toml")
-
-	for _,field := range splittoList(monitorsv1beta1.Burrow{}.Spec.Zookeeper.Servers, ' ') {
-
-		fmt.Println(field)
-	}
-config.Set("zookeeper.servers",)
-*/
-return nil
-
-
-
-}
-
 func splittoList(tosplit string, sep rune) []string {
 	var fields []string
 
 	last := 0
-	for i,c := range tosplit {
+	for i, c := range tosplit {
 		if c == sep {
 			// Found the separator, append a slice
 			fields = append(fields, string(tosplit[last:i]))
