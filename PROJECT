@@ -1,0 +1,3 @@
+version: "1"
+domain: cisco.com
+repo: burrow-operator

@@ -1,0 +1,6 @@
+kind: ConfigMap
+metadata:
+  name: burrow-config
+apiVersion: v1
+data:
+  burrow.toml: |-
