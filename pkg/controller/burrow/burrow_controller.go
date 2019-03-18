@@ -1,27 +1,31 @@
 package burrow
 
 import (
+	"bytes"
 	"context"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
+
 	//"io/ioutil"
 	//"os"
 
 	//"fmt"
 	//"os"
 
-	//"io/ioutil"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"log"
-	//"os"
-	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	monitorsv1beta1 "burrow-operator/pkg/apis/monitors/v1beta1"
+	"encoding/json"
+	"github.com/BurntSushi/toml"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"log"
+	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	//"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -36,47 +40,39 @@ type burrowconfig struct {
 }
 
 type Burrow struct {
-	ClientProfile struct {
-		KafkaProfile struct {
-			ClientID     string `json:"client-id"`
-			KafkaVersion string `json:"kafka-version"`
-		} `json:"kafka-profile"`
-	} `json:"client-profile"`
-	Cluster struct {
-		MyCluster struct {
-			ClassName     string `json:"class-name"`
-			ClientProfile string `json:"client-profile"`
-			OffsetRefresh int64  `json:"offset-refresh"`
-			Servers       string `json:"servers"`
-			TopicRefresh  int64  `json:"topic-refresh"`
-		} `json:"my-cluster"`
-	} `json:"cluster"`
-	Consumer struct {
-		ConsumerKafka struct {
-			ClassName      string `json:"class-name"`
-			ClientProfile  string `json:"client-profile"`
-			Cluster        string `json:"cluster"`
-			GroupBlacklist string `json:"group-blacklist"`
-			GroupWhitelist string `json:"group-whitelist"`
-			OffsetsTopic   string `json:"offsets-topic"`
-			Servers        string `json:"servers"`
-			StartLatest    bool   `json:"start-latest"`
-		} `json:"consumer_kafka"`
-	} `json:"consumer"`
 	General struct {
 		AccessControlAllowOrigin string `json:"access-control-allow-origin"`
 	} `json:"general"`
-	Httpserver struct {
-		Default struct {
-			Address string `json:"address"`
-		} `json:"default"`
-	} `json:"httpserver"`
 	Logging struct {
 		Level string `json:"level"`
 	} `json:"logging"`
 	Zookeeper struct {
-		Servers string `json:"servers"`
+		Servers []string `json:"servers"`
 	} `json:"zookeeper"`
+	ClientProfileKafkaProfile struct {
+		KafkaVersion string `json:"kafka-version"`
+		ClientID     string `json:"client-id"`
+	} `json:"client-profile:kafka-profile"`
+	ClusterMyCluster struct {
+		ClassName     string   `json:"class-name"`
+		ClientProfile string   `json:"client-profile"`
+		Servers       []string `json:"servers"`
+		TopicRefresh  int      `json:"topic-refresh"`
+		OffsetRefresh int      `json:"offset-refresh"`
+	} `json:"cluster:my-cluster"`
+	ConsumerConsumerKafka struct {
+		ClassName      string   `json:"class-name"`
+		Cluster        string   `json:"cluster"`
+		Servers        []string `json:"servers"`
+		ClientProfile  string   `json:"client-profile"`
+		StartLatest    bool     `json:"start-latest"`
+		OffsetsTopic   string   `json:"offsets-topic"`
+		GroupWhitelist string   `json:"group-whitelist"`
+		GroupBlacklist string   `json:"group-blacklist"`
+	} `json:"consumer:consumer_kafka"`
+	HttpserverDefault struct {
+		Address string `json:"address"`
+	} `json:"httpserver:default"`
 }
 
 // +kubebuilder:controller:group=monitors,version=v1beta1,kind=Burrow,resource=burrows
@@ -159,36 +155,39 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	log.Printf("BurrowImage:%s", instance.Spec.BurrowImage)
 	log.Printf("BurrowImage:%s", instance.Spec.ExporterImage)
 
+	var burrowconfigmap Burrow
+	filename, _ := filepath.Abs("template/burrow.json")
+	yamlFile, err := ioutil.ReadFile(filename)
+
+	if err != nil {
+		panic(err)
+	}
+	err = json.Unmarshal(yamlFile, &burrowconfigmap)
+	if err != nil {
+		panic(err)
+	}
+
 	configMap := &corev1.ConfigMap{}
 	configMap.APIVersion = "v1"
 	configMap.Kind = "ConfigMap"
 	configMap.Name = "burrow-config"
 	configMap.Namespace = instance.Namespace
 
-	/*tl, _ := toml.LoadFile("template/burrow.toml")
-
-	data := make(map[string]string)
-
-	for k, v := range tl.ToMap() {
-		data[k] = v.(string)
-	}*/
-	configMap.Data = map[string]string{}
-
-	//log.Printf("", configMap.Data)
-
-	//ts, ok := configMap.Data["template"]
-
-	//configMap.BinaryData= map[string][]byte{}
-
-	//bc := BuildConfigMap()
-	//fmt.Printf("err: %v\n", bc)
-	/*m, err := yaml.Marshal(bc)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-
+	buf := new(bytes.Buffer)
+	if err := toml.NewEncoder(buf).Encode(burrowconfigmap); err != nil {
+		panic(err)
 	}
 
-	err = configMap.Unmarshal(m)*/
+	var s string
+	buf.WriteString(s)
+	strings.ToLower(s)
+	//log.Print("%s", s)
+	configMap.Data = map[string]string{
+		"burrow.toml": strings.ToLower(buf.String()),
+	}
+
+
+
 	if err != nil {
 		return reconcile.Result{}, err
 
@@ -198,6 +197,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	found_cm := &corev1.ConfigMap{}
+
 	err = r.Get(context.TODO(), types.NamespacedName{Name: "burrow-config", Namespace: configMap.Namespace}, found_cm)
 	if err != nil && errors.IsNotFound(err) {
 		log.Printf("Creating configMap %s/%s\n", configMap.Namespace, "burrow-config")
@@ -220,15 +220,15 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 
 	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name + "-deployment",
+			Name:      "burrow",
 			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{"deployment": instance.Name + "-deployment"},
+				MatchLabels: map[string]string{"deployment": "burrow"},
 			},
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{"deployment": instance.Name + "-deployment"}},
+				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{"deployment": "burrow"}},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
@@ -311,7 +311,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: instance.Name,
+			Name: "burrow",
 
 			OwnerReferences: nil,
 		},
@@ -325,7 +325,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 				},
 			},
 			Selector: map[string]string{
-				"name": instance.Name,
+				"name": "burrow",
 			},
 		},
 	}
@@ -334,6 +334,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	found_service := &corev1.Service{}
+
 	err = r.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, found_service)
 	if err != nil && errors.IsNotFound(err) {
 		log.Printf("Creating Service %s/%s\n", service.Namespace, service.Name)
@@ -358,9 +359,36 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 
 }
 
+/*func buildInmemoryConfigMap(input Burrow ,spec monitorsv1beta1.BurrowSpec,configMap corev1.ConfigMap) {
+
+
+	op:= reflect.ValueOf(spec)
+	op_values := make([]interface{}, op.NumField()):q
+
+
+	in:=reflect.ValueOf(input)
+
+
+
+
+	for i := 0; i < op.NumField(); i++ {
+
+
+		//op_values[i] = op.Field(i).Interface()
+
+		s := in.Field(i).FieldByName().String()
+		i2 := op.FieldByName(s).String()
+
+	}
+
+
+	return
+
+
+
+}*/
 func splittoList(tosplit string, sep rune) []string {
 	var fields []string
-
 	last := 0
 	for i, c := range tosplit {
 		if c == sep {

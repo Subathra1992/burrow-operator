@@ -12,40 +12,32 @@
       "my-cluster-zookeeper-2.my-cluster-zookeeper-nodes:21812"
     ]
   },
-  "client-profile": {
-    "kafka-profile": {
-      "kafka-version": "2.0.1",
-      "client-id": "burrow-client"
-    }
+  "client-profile:kafka-profile": {
+    "kafka-version": "2.0.1",
+    "client-id": "burrow-client"
   },
-  "cluster": {
-    "my-cluster": {
-      "class-name": "kafka",
-      "client-profile": "kafka-profile",
-      "servers": [
-        "my-cluster-kafka-bootstrap:9092"
-      ],
-      "topic-refresh": 120,
-      "offset-refresh": 10
-    }
+  "cluster:my-cluster": {
+    "class-name": "kafka",
+    "client-profile": "kafka-profile",
+    "servers": [
+      "my-cluster-kafka-bootstrap:9092"
+    ],
+    "topic-refresh": 120,
+    "offset-refresh": 10
   },
-  "consumer": {
-    "consumer_kafka": {
-      "class-name": "kafka",
-      "cluster": "my-cluster",
-      "servers": [
-        "my-cluster-kafka-bootstrap:9092"
-      ],
-      "client-profile": "kafka-profile",
-      "start-latest": true,
-      "offsets-topic": "__consumer_offsets",
-      "group-whitelist": ".*",
-      "group-blacklist": "^(console-consumer-|python-kafka-consumer-).*$"
-    }
+  "consumer:consumer_kafka": {
+    "class-name": "kafka",
+    "cluster": "my-cluster",
+    "servers": [
+      "my-cluster-kafka-bootstrap:9092"
+    ],
+    "client-profile": "kafka-profile",
+    "start-latest": true,
+    "offsets-topic": "__consumer_offsets",
+    "group-whitelist": ".*",
+    "group-blacklist": "^(console-consumer-|python-kafka-consumer-).*$"
   },
-  "httpserver": {
-    "default": {
-      "address": ":8000"
-    }
+  "httpserver:default": {
+    "address": ":8000"
   }
 }
