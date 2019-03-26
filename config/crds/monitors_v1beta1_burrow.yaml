@@ -34,21 +34,29 @@ spec:
             burrowImag:
               type: string
             cluster:
+              properties:
+                servers:
+                  type: string
+              required:
+              - servers
               type: object
             consumer:
+              properties:
+                cluster:
+                  type: string
+                servers:
+                  type: string
               type: object
             exporterImage:
               type: string
-            general:
-              type: object
             httpserver:
               properties:
-                default:
-                  properties:
-                    address:
-                      type: string
-                  type: object
+                address:
+                  type: string
               type: object
+            interval:
+              format: int32
+              type: integer
             logging:
               properties:
                 level:
@@ -61,6 +69,8 @@ spec:
               properties:
                 zkservers:
                   type: string
+              required:
+              - zkservers
               type: object
           type: object
         status:

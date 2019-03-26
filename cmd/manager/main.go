@@ -1,11 +1,14 @@
 package main
 
 import (
+	"k8s.io/client-go/kubernetes"
 	"os"
+	"time"
 
 	"burrow-operator/pkg/apis"
 	"burrow-operator/pkg/controller"
 	"burrow-operator/pkg/webhook"
+	kubeinformers "k8s.io/client-go/informers"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -54,6 +57,20 @@ func main() {
 	if err := webhook.AddToManager(mgr); err != nil {
 		log.Error(err, "unable to register webhooks to the manager")
 		os.Exit(1)
+	}
+
+	// Setup informers and clients
+
+	generatedClient := kubernetes.NewForConfigOrDie(mgr.GetConfig())
+	generatedInformers := kubeinformers.NewSharedInformerFactory(generatedClient, time.Minute*30)
+
+	err = mgr.Add(manager.RunnableFunc(func(s <-chan struct{}) error {
+		generatedInformers.Start(s)
+		<-s
+		return nil
+	}))
+	if err != nil {
+		log.Info("error Adding InformerFactory to the Manager: %v", err)
 	}
 
 	// Start the Cmd

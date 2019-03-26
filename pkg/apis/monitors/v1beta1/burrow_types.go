@@ -9,81 +9,66 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // BurrowSpec defines the desired state of Burrow
-type BurrowSpec struct {
-	// +optional
-	ClientProfile struct {
-		// +optional
-		KafkaProfile struct {
-			// +optional
-			ClientID string `json:"client-id,omitempty"`
-			// +optional
-			KafkaVersion string `json:"kafka-version,omitempty"`
-		} `json:"kafka-profile,omitempty"`
-	} `json:"client-profile,omitempty"`
-	// +optional
-	Cluster struct {
-		// +optional
-		MyCluster struct {
-			// +optional
-			ClassName string `json:"class-name,omitempty"`
-			// +optional
-			ClientProfile string `json:"client-profile,omitempty"`
-			// +optional
-			OffsetRefresh int64 `json:"offset-refresh,omitempty"`
-			// +optional
-			Servers string `json:"bkservers,omitempty"`
-			// +optional
-			TopicRefresh int64 `json:"topic-refresh,omitempty"`
-		} `json:"my-cluster,omitempty"`
-	} `json:"cluster,omitempty"`
-	// +optional
-	Consumer struct {
-		// +optional
-		ConsumerKafka struct {
-			// +optional
-			ClassName string `json:"class-name,omitempty"`
-			// +optional
-			ClientProfile string `json:"client-profile,omitempty"`
-			// +optional
-			Cluster string `json:"cluster,omitempty"`
-			// +optional
-			GroupBlacklist string `json:"group-blacklist,omitempty"`
-			// +optional
-			GroupWhitelist string `json:"group-whitelist,omitempty"`
-			// +optional
-			OffsetsTopic string `json:"offsets-topic,omitempty"`
-			// +optional
-			Servers string `json:"bkservers,omitempty"`
-			// +optional
-			StartLatest bool `json:"start-latest,omitempty"`
-		} `json:"consumer_kafka,omitempty"`
-	} `json:"consumer,omitempty"`
-	// +optional
-	General struct {
-		// +optional
-		AccessControlAllowOrigin string `json:"access-control-allow-origi,omitemptyn"`
-	} `json:"general,omitempty"`
-	// +optional
-	Httpserver struct {
-		// +optional
-		Default struct {
-			// +optional
-			Address string `json:"address,omitempty"`
-		} `json:"default,omitempty"`
-	} `json:"httpserver,omitempty"`
+
+
+
+
+
+type BurrowConfigSpec struct {
+
 	// +optional
 	Logging struct {
 		// +optional
 		Level string `json:"level,omitempty"`
 	} `json:"logging,omitempty"`
-
 	// +optional
-
 	Zookeeper struct {
-		// +optional
-		Servers string `json:"zkservers,omitempty"`
+		Servers string `json:"zkservers"`
 	} `json:"zookeeper,omitempty"`
+	// +optional
+	ClientProfileKafkaProfile struct {
+		// +optional
+		KafkaVersion string `json:"kafka-version,omitempty"`
+		// +optional
+		ClientID string `json:"client-id,omitempty"`
+	} `json:"client-profile,omitempty"`
+	// +optional
+	ClusterMyCluster struct {
+		// +optional
+		ClassName string `json:"class-name,omitempty"`
+		// +optional
+		ClientProfile string `json:"client-profile,omitempty"`
 
+		Servers string `json:"servers"`
+		// +optional
+		TopicRefresh int `json:"topic-refresh,omitempty"`
+		// +optional
+		OffsetRefresh int `json:"offset-refresh,omitempty"`
+	} `json:"cluster,omitempty"`
+	// +optional
+	ConsumerConsumerKafka struct {
+		// +optional
+		ClassName string `json:"class-name,omitempty"`
+		// +optional
+		Cluster string `json:"cluster,omitempty"`
+		// +optional
+		Servers string `json:"servers,omitempty"`
+		// +optional
+		ClientProfile string `json:"client-profile,omitempty"`
+		// +optional
+		StartLatest bool `json:"start-latest,omitempty"`
+		// +optional
+		OffsetsTopic string `json:"offsets-topic,omitempty"`
+		// +optional
+		GroupWhitelist string `json:"group-whitelist,omitempty"`
+		// +optional
+		GroupBlacklist string `json:"group-blacklist,omitempty"`
+	} `json:"consumer,omitempty"`
+	// +optional
+	HttpserverDefault struct {
+		// +optional
+		Address string `json:"address,omitempty"`
+	} `json:"httpserver,omitempty"`
 	// +optional
 	ApiPort int32 `json:"apiport,omitempty"`
 	// +optional
@@ -92,6 +77,10 @@ type BurrowSpec struct {
 	BurrowImage string `json:"burrowImag,omitempty"`
 	// +optional
 	ExporterImage string `json:"exporterImage,omitempty"`
+	// +optional
+	ApiVersion int32 `json:"api_version,omitempty"`
+	// +optional
+	Interval int32 `json:"interval,omitempty"`
 }
 
 /*type Zookeeper struct {
@@ -119,7 +108,8 @@ type Burrow struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BurrowSpec   `json:"spec,omitempty"`
+	Spec BurrowConfigSpec `json:"spec,omitempty"`
+
 	Status BurrowStatus `json:"status,omitempty"`
 }
 

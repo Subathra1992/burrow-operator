@@ -12,7 +12,10 @@ spec:
   zookeeper:
     zkservers: "my-cluster-zookeeper-0.my-cluster-zookeeper-nodes:21810,my-cluster-zookeeper-1.my-cluster-zookeeper-nodes:21811,my-cluster-zookeeper-2.my-cluster-zookeeper-nodes:21812"
   consumer:
-    consumer_kafka:
-      bkservers: "my-cluster-kafka-bootstrap:9092"
-  kafka-version: "2.0.1"
+    bkservers: "my-cluster-kafka-bootstrap:9092"
+  client-profile:
+    kafka-version: "2.0.1"
+  interval: 15
+  api_version: 3
+
 

@@ -11,6 +11,8 @@ import (
 	clientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
+
+
 func CreateService(client clientv1.ServiceInterface, service *v1.Service) error {
 	_, err := client.Create(service)
 
@@ -56,6 +58,8 @@ func CreateDeployment(client clientv1beta1.DeploymentInterface, deployment *apps
 	}
 	return nil
 }
+
+
 
 type DeploymentInput struct {
 	Name            string
