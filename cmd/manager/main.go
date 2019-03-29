@@ -73,6 +73,13 @@ func main() {
 		log.Info("error Adding InformerFactory to the Manager: %v", err)
 	}
 
+	//get k8sclient
+	/*k8sClient, err := getClient(kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}*/
+
 	// Start the Cmd
 	log.Info("Starting the Cmd.")
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {

@@ -10,10 +10,6 @@ import (
 
 // BurrowSpec defines the desired state of Burrow
 
-
-
-
-
 type BurrowConfigSpec struct {
 
 	// +optional
@@ -39,7 +35,7 @@ type BurrowConfigSpec struct {
 		// +optional
 		ClientProfile string `json:"client-profile,omitempty"`
 
-		Servers string `json:"servers"`
+		Servers string `json:"bkservers"`
 		// +optional
 		TopicRefresh int `json:"topic-refresh,omitempty"`
 		// +optional
@@ -51,8 +47,8 @@ type BurrowConfigSpec struct {
 		ClassName string `json:"class-name,omitempty"`
 		// +optional
 		Cluster string `json:"cluster,omitempty"`
-		// +optional
-		Servers string `json:"servers,omitempty"`
+
+		Servers string `json:"bkservers"`
 		// +optional
 		ClientProfile string `json:"client-profile,omitempty"`
 		// +optional

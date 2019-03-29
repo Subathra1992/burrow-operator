@@ -35,17 +35,19 @@ spec:
               type: string
             cluster:
               properties:
-                servers:
+                bkservers:
                   type: string
               required:
-              - servers
+              - bkservers
               type: object
             consumer:
               properties:
+                bkservers:
+                  type: string
                 cluster:
                   type: string
-                servers:
-                  type: string
+              required:
+              - bkservers
               type: object
             exporterImage:
               type: string

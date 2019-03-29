@@ -5,28 +5,32 @@ logging:
   level: {{ .level }}
 zookeeper:
   servers:
-    - my-cluster-zookeeper-0.my-cluster-zookeeper-nodes:21810
-    - my-cluster-zookeeper-1.my-cluster-zookeeper-nodes:21811
-    - my-cluster-zookeeper-2.my-cluster-zookeeper-nodes:21812
-client-profile:kafka-profile:
-    kafka-version: {{ .kafka-version }}
-    client-id: {{ .client-id }}
-cluster:my-cluster:
-    class-name: {{ .class-name }}
-    client-profile: {{ }}
-    servers:
-      - my-cluster-kafka-bootstrap:9092
-    topic-refresh: 120
-    offset-refresh: 10
-consumer:consumer_kafka:
-    class-name: kafka
-    cluster: my-cluster
-    servers:
-      - my-cluster-kafka-bootstrap:9092
-    client-profile: kafka-profile
-    start-latest: true
-    offsets-topic: __consumer_offsets
-    group-whitelist: ".*"
-    group-blacklist: "^(console-consumer-|python-kafka-consumer-).*$"
-httpserver:default:
-    address: ":8000"
+    - {{ .server1 }}
+    - {{ .server2 }}
+    - {{ .server3 }}
+client-profile:
+  kafka-profile:
+      kafka-version: {{ .kafka-version }}
+      client-id: {{ .client-id }}
+cluster:
+  my-cluster:
+      class-name: {{ .class-name }}
+      client-profile: {{ .client-profile }}
+      servers:
+        - {{ .servers }}
+      topic-refresh: {{ .topic-refresh }}
+      offset-refresh: {{ .offset-refresh }}
+consumer:
+  consumer_kafka:
+      class-name: kafka
+      cluster: {{ .cluster }}
+      servers:
+         - {{ .bkserver }}
+      client-profile: kafka-profile
+      start-latest: true
+      offsets-topic: __consumer_offsets
+      group-whitelist: ".*"
+      group-blacklist: "^(console-consumer-|python-kafka-consumer-).*$"
+httpserver:
+  default:
+    address: {{ .api_port }}
