@@ -334,3 +334,14 @@ func splittoList(tosplit string, sep rune) []string {
 
 	return fields
 }
+
+func isValidNamespace(namespace string) bool {
+
+	switch namespace {
+	case "kube-system", "kube-public", "default":
+
+		log.Printf("You are not allowed create in %s Namespace", namespace)
+		return false
+	}
+	return true
+}

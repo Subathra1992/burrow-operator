@@ -96,6 +96,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	// Fetch the Burrow instance
 	instance := &monitorsv1beta1.Burrow{}
 
+	burrowerror := &burrowerror{}
 	err := r.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -110,6 +111,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	if err != nil {
 		fmt.Print(err)
 	}
+
 	log.Printf("Checking status of resource %s", instance.Name)
 	log.Printf("zkserver:%s", instance.Spec.Zookeeper.Servers)
 
@@ -119,7 +121,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	//con:=new(Config)
 	//con:=populateConfig()
 
-	log.Printf(":%s", b)
+	//log.Printf(":%s", b)
 
 	configMap := NewConfigMap(*instance)
 
@@ -136,96 +138,98 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 
 	found_cm := &corev1.ConfigMap{}
 
-	/*	switch instance.Namespace {
-		case
-			"kube-system",
-			"kube-public",
-			"default":
-			log.Printf("You are not allowed create in %s Namespace", instance.Namespace)
-			panic("Namespace error")
+	validnamespace := isValidNamespace(instance.Namespace)
 
-		}*/
-
-	err = r.Get(context.TODO(), types.NamespacedName{Name: "burrow-config", Namespace: configMap.Namespace}, found_cm)
-	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating configMap %s/%s\n", configMap.Namespace, "burrow-config")
-		err = r.Create(context.TODO(), configMap)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-	} else if err != nil {
-		return reconcile.Result{}, err
-
-	}
-	if !reflect.DeepEqual(configMap, found_cm) {
-		found_cm = configMap
-		log.Printf("Updating configMap %s/%s\n", configMap.Namespace, "config")
-		err = r.Update(context.TODO(), found_cm)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-	}
-
-	deploy := NewDeployment(*instance)
-
-	if err := controllerutil.SetControllerReference(instance, deploy, r.scheme); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	//log.Printf("BurrowImage:%s", deploy.Namespace)
-
-	found := &appsv1.Deployment{}
-	err = r.Get(context.TODO(), types.NamespacedName{Name: deploy.Name, Namespace: deploy.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating Deployment %s/%s\n", deploy.Namespace, deploy.Name)
-		err = r.Create(context.TODO(), deploy)
-		if err != nil {
+	if validnamespace {
+		err = r.Get(context.TODO(), types.NamespacedName{Name: "burrow-config", Namespace: configMap.Namespace}, found_cm)
+		if err != nil && errors.IsNotFound(err) {
+			log.Printf("Creating configMap %s/%s\n", configMap.Namespace, "burrow-config")
+			err = r.Create(context.TODO(), configMap)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		} else if err != nil {
 			return reconcile.Result{}, err
 
 		}
-	} else if err != nil {
-		return reconcile.Result{}, err
+		if !reflect.DeepEqual(configMap, found_cm) {
+			found_cm = configMap
+			log.Printf("Updating configMap %s/%s\n", configMap.Namespace, "config")
+			err = r.Update(context.TODO(), found_cm)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		}
 
-	}
+		deploy := NewDeployment(*instance)
 
-	if !reflect.DeepEqual(deploy.Spec, found.Spec) {
-		found.Spec = deploy.Spec
-		log.Printf("Updating Deployment %s/%s\n", deploy.Namespace, deploy.Name)
-		err = r.Update(context.TODO(), found)
-
-		if err != nil {
+		if err := controllerutil.SetControllerReference(instance, deploy, r.scheme); err != nil {
 			return reconcile.Result{}, err
 		}
-	}
 
-	service := NewService(*instance)
+		//log.Printf("BurrowImage:%s", deploy.Namespace)
 
-	if err := controllerutil.SetControllerReference(instance, service, r.scheme); err != nil {
-		return reconcile.Result{}, err
-	}
+		found := &appsv1.Deployment{}
+		err = r.Get(context.TODO(), types.NamespacedName{Name: deploy.Name, Namespace: deploy.Namespace}, found)
+		if err != nil && errors.IsNotFound(err) {
+			log.Printf("Creating Deployment %s/%s\n", deploy.Namespace, deploy.Name)
+			err = r.Create(context.TODO(), deploy)
+			if err != nil {
+				return reconcile.Result{}, err
 
-	found_service := &corev1.Service{}
+			}
+		} else if err != nil {
+			return reconcile.Result{}, err
 
-	err = r.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, found_service)
-	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating Service %s/%s\n", service.Namespace, service.Name)
-		err = r.Create(context.TODO(), service)
-		if err != nil {
+		}
+
+		if !reflect.DeepEqual(deploy.Spec, found.Spec) {
+			found.Spec = deploy.Spec
+			log.Printf("Updating Deployment %s/%s\n", deploy.Namespace, deploy.Name)
+			err = r.Update(context.TODO(), found)
+
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+
+		service := NewService(*instance)
+
+		if err := controllerutil.SetControllerReference(instance, service, r.scheme); err != nil {
 			return reconcile.Result{}, err
 		}
-	} else if err != nil {
-		return reconcile.Result{}, err
 
-	}
+		found_service := &corev1.Service{}
 
-	if !reflect.DeepEqual(service.Spec, found_service.Spec) {
-		found_service.Spec = service.Spec
-		log.Printf("Updating Service %s/%s\n", service.Namespace, service.Name)
-		err = r.Update(context.TODO(), found)
-		if err != nil {
+		err = r.Get(context.TODO(), types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, found_service)
+		if err != nil && errors.IsNotFound(err) {
+			log.Printf("Creating Service %s/%s\n", service.Namespace, service.Name)
+			err = r.Create(context.TODO(), service)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		} else if err != nil {
 			return reconcile.Result{}, err
+
 		}
+
+		if !reflect.DeepEqual(service.Spec, found_service.Spec) {
+			found_service.Spec = service.Spec
+			log.Printf("Updating Service %s/%s\n", service.Namespace, service.Name)
+			err = r.Update(context.TODO(), found)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+
+		return reconcile.Result{}, nil
+
 	}
+
+	burrowerror.error = instance.Namespace
+
+	burrowerror.InvalidNamespaceError()
+
 	return reconcile.Result{}, nil
 
 }

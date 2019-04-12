@@ -23,6 +23,7 @@ func TestStorageBurrow(t *testing.T) {
 
 	// Test Create
 	fetched := &Burrow{}
+
 	g.Expect(c.Create(context.TODO(), created)).NotTo(gomega.HaveOccurred())
 
 	g.Expect(c.Get(context.TODO(), key, fetched)).NotTo(gomega.HaveOccurred())

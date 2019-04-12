@@ -9,6 +9,9 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // BurrowSpec defines the desired state of Burrow
+type MyError struct {
+	msg string
+}
 
 type BurrowConfigSpec struct {
 
