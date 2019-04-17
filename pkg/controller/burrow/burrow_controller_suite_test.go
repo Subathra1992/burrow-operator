@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"burrow-operator/pkg/apis"
+	"github.com/subravi92/burrow-operator/pkg/apis"
 
 	"github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"

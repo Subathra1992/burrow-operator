@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	monitorsv1beta1 "burrow-operator/pkg/apis/monitors/v1beta1"
+	monitorsv1beta1 "github.com/subravi92/burrow-operator/pkg/apis/monitors/v1beta1"
 
 	"github.com/onsi/gomega"
 	"golang.org/x/net/context"

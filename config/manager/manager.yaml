@@ -2,81 +2,92 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
+    control-plane: burrow-controller-manager
     controller-tools.k8s.io: "1.0"
-  name: system
+  name: burrow-manager
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: controller-manager-service
+  name: burrow-manager-service
   namespace: system
   labels:
-    control-plane: controller-manager
+    control-plane: burrow-controller-manager
     controller-tools.k8s.io: "1.0"
 spec:
   selector:
-    control-plane: controller-manager
+    control-plane: burrow-controller-manager
     controller-tools.k8s.io: "1.0"
   ports:
-  - port: 443
+    - port: 443
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: controller-manager
+  name: burrow-manager
   namespace: system
   labels:
-    control-plane: controller-manager
+    control-plane: burrow-controller-manager
     controller-tools.k8s.io: "1.0"
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: burrow-controller-manager
       controller-tools.k8s.io: "1.0"
-  serviceName: controller-manager-service
+  serviceName: burrow-controller-manager-service
   template:
     metadata:
       labels:
-        control-plane: controller-manager
+        control-plane: burrow-controller-manager
         controller-tools.k8s.io: "1.0"
     spec:
       containers:
-      - command:
-        - /root/manager
-        image: controller:latest
-        imagePullPolicy: Always
-        name: manager
-        env:
-          - name: POD_NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          - name: SECRET_NAME
-            value: $(WEBHOOK_SECRET_NAME)
-        resources:
-          limits:
-            cpu: 100m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
-        ports:
-        - containerPort: 9876
-          name: webhook-server
-          protocol: TCP
-        volumeMounts:
-        - mountPath: /tmp/cert
-          name: cert
-          readOnly: true
+        - command:
+            - /manager
+          image: containers.cisco.com/subravi/burrow-controller:v4
+          imagePullPolicy: Always
+          name: manager
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: SECRET_NAME
+              value: $(WEBHOOK_SECRET_NAME)
+          resources:
+            limits:
+              cpu: 100m
+              memory: 30Mi
+            requests:
+              cpu: 100m
+              memory: 20Mi
+          ports:
+            - containerPort: 9877
+              name: webhook-server
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /tmp/cert
+              name: cert
+              readOnly: true
       terminationGracePeriodSeconds: 10
+      imagePullSecrets:
+        - name: subravi-robot-pull-secret
       volumes:
-      - name: cert
-        secret:
-          defaultMode: 420
-          secretName: webhook-server-secret
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: webhook-server-secret
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: webhook-server-secret
   namespace: system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: subravi-robot-pull-secret
+data:
+  .dockerconfigjson: ewogICJhdXRocyI6IHsKICAgICJjb250YWluZXJzLmNpc2NvLmNvbSI6IHsKICAgICAgImF1dGgiOiAiYzNWaWNtRjJhU3R5YjJKdmREcFRSVUpIUWpGTk5FUk1PRlZXV2tRMlJEWTBNVm95UjBWTlV6QXhVMDVGVURCS1VVMUlVVkpJUXpreFZVaEhXbEJOVWtkWlRrRXlVMGRVV1ZWRVIwazEiLAogICAgICAiZW1haWwiOiAiIgogICAgfQogIH0KfQ==
+type: kubernetes.io/dockerconfigjson

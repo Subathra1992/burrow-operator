@@ -13,7 +13,7 @@ import (
 	//"os"
 
 	//"text/template"
-	monitorsv1beta1 "burrow-operator/pkg/apis/monitors/v1beta1"
+	monitorsv1beta1 "github.com/subravi92/burrow-operator/pkg/apis/monitors/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -91,7 +91,14 @@ type ReconcileBurrow struct {
 // a Deployment as an example
 // Automatically generate RBAC rules to allow the Controller to read and write Deployments
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=monitors.aims.cisco.com,resources=burrows,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=monitors.aims.cisco.com,resources=burrows/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=monitors.aims.cisco.com,resources=burrows/finalizers,verbs=get;update;patch;delete;list;watch
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;watch;list
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;watch;list;create;update;delete
 func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// Fetch the Burrow instance
 	instance := &monitorsv1beta1.Burrow{}
@@ -107,7 +114,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	b, err := ioutil.ReadFile("template/burrow.toml")
+	b, err := ioutil.ReadFile("config/template/burrow.toml")
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -141,9 +148,9 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 	validnamespace := isValidNamespace(instance.Namespace)
 
 	if validnamespace {
-		err = r.Get(context.TODO(), types.NamespacedName{Name: "burrow-config", Namespace: configMap.Namespace}, found_cm)
+		err = r.Get(context.TODO(), types.NamespacedName{Name: "burrow-config", Namespace: instance.Namespace}, found_cm)
 		if err != nil && errors.IsNotFound(err) {
-			log.Printf("Creating configMap %s/%s\n", configMap.Namespace, "burrow-config")
+			log.Printf("Creating configMap %s/%s\n", instance.Namespace, "burrow-config")
 			err = r.Create(context.TODO(), configMap)
 			if err != nil {
 				return reconcile.Result{}, err
@@ -154,7 +161,7 @@ func (r *ReconcileBurrow) Reconcile(request reconcile.Request) (reconcile.Result
 		}
 		if !reflect.DeepEqual(configMap, found_cm) {
 			found_cm = configMap
-			log.Printf("Updating configMap %s/%s\n", configMap.Namespace, "config")
+			log.Printf("Updating configMap %s/%s\n", instance.Namespace, "config")
 			err = r.Update(context.TODO(), found_cm)
 			if err != nil {
 				return reconcile.Result{}, err

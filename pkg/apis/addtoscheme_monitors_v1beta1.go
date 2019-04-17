@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"burrow-operator/pkg/apis/monitors/v1beta1"
+	"github.com/subravi92/burrow-operator/pkg/apis/monitors/v1beta1"
 )
 
 func init() {

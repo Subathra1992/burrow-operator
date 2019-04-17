@@ -17,6 +17,38 @@ rules:
   - patch
   - delete
 - apiGroups:
+  - apps
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
   - monitors.aims.cisco.com
   resources:
   - burrows
@@ -27,6 +59,44 @@ rules:
   - create
   - update
   - patch
+  - delete
+- apiGroups:
+  - monitors.aims.cisco.com
+  resources:
+  - burrows/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - monitors.aims.cisco.com
+  resources:
+  - burrows/finalizers
+  verbs:
+  - get
+  - update
+  - patch
+  - delete
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - watch
+  - list
+  - create
+  - update
   - delete
 - apiGroups:
   - admissionregistration.k8s.io

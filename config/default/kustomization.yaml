@@ -1,29 +1,33 @@
 # Adds namespace to all resources.
-namespace: burrow-operator-system
+namespace: burrow-manager
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: burrow-operator-
+
+#namePrefix: burrow-manager-
 
 # Labels to add to all resources and selectors.
 #commonLabels:
-#  someName: someValue
+commonAnnotations:
+  managedBy: aims.cisco.com/kafka
+  author: subravi@cisco.com
+  support: aims-team@cisco.com
 
 # Each entry in this list must resolve to an existing
 # resource definition in YAML.  These are the resource
 # files that kustomize reads, modifies and emits as a
 # YAML string, with resources separated by document
 # markers ("---").
-resources:
-- ../rbac/rbac_role.yaml
-- ../rbac/rbac_role_binding.yaml
-- ../manager/manager.yaml
+bases:
+- ../rbac/
+- ../manager/
+
 
 patches:
-- manager_image_patch.yaml
+#- manager_image_patch.yaml
 
 vars:
 - name: WEBHOOK_SECRET_NAME

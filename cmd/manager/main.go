@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"burrow-operator/pkg/apis"
-	"burrow-operator/pkg/controller"
-	"burrow-operator/pkg/webhook"
+	"github.com/subravi92/burrow-operator/pkg/apis"
+	"github.com/subravi92/burrow-operator/pkg/controller"
+	"github.com/subravi92/burrow-operator/pkg/webhook"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"

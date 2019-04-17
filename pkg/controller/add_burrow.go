@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"burrow-operator/pkg/controller/burrow"
+	"github.com/subravi92/burrow-operator/pkg/controller/burrow"
 )
 
 func init() {

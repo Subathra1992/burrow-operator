@@ -1,10 +1,10 @@
 package burrow
 
 import (
-	monitorsv1beta1 "burrow-operator/pkg/apis/monitors/v1beta1"
 	"bytes"
 	"encoding/json"
 	"github.com/BurntSushi/toml"
+	monitorsv1beta1 "github.com/subravi92/burrow-operator/pkg/apis/monitors/v1beta1"
 	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/core/v1"
@@ -182,7 +182,7 @@ func NewDeployment(instance monitorsv1beta1.Burrow) *appsv1.Deployment {
 func NewConfigMap(instance monitorsv1beta1.Burrow) *corev1.ConfigMap {
 
 	var burrowconfigmap Burrow
-	filename, _ := filepath.Abs("template/burrow.json")
+	filename, _ := filepath.Abs("config/template/burrow.json")
 	jsonFile, err := ioutil.ReadFile(filename)
 
 	if err != nil {
