@@ -7,8 +7,8 @@ metadata:
 spec:
   apiport: 8080
   metricsport: 8000
-  burrowImag: "dichque/burrow"
-  exporterImage: "solsson/burrow-exporter"
+  burrowImag: "containers.cisco.com/jaganaga/burrow:1.0"
+  exporterImage: "containers.cisco.com/jaganaga/burrow-exporter:1.0"
   zookeeper:
     zkservers: "my-cluster-zookeeper-0.my-cluster-zookeeper-nodes:21810,my-cluster-zookeeper-1.my-cluster-zookeeper-nodes:21811,my-cluster-zookeeper-2.my-cluster-zookeeper-nodes:21812"
   consumer:

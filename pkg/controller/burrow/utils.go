@@ -135,6 +135,8 @@ func NewDeployment(instance monitorsv1beta1.Burrow) *appsv1.Deployment {
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      configMapMetaName,
 								MountPath: "/etc/burrow/config",
+
+
 							},
 							},
 						},
@@ -161,7 +163,11 @@ func NewDeployment(instance monitorsv1beta1.Burrow) *appsv1.Deployment {
 							},
 						},
 					},
-
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{
+							Name: "cisco-secret",
+						},
+					},
 					Volumes: []corev1.Volume{
 						{
 							Name: configMapMetaName,
