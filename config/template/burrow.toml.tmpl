@@ -1,0 +1,28 @@
+[general]
+    access-control-allow-origin="*"
+[logging]
+    level="info"
+[zookeeper]
+    # Refer: https://github.com/strimzi/strimzi-kafka-operator/issues/673
+    # Zookeeper port 2181 is exposed via stunnel, above is alternative option
+    servers=[{{ .Zkservers }}]
+[client-profile.kafka-profile]
+    kafka-version="{{ .Kafkaversion }}"
+    client-id="burrow-client"
+[cluster.my-cluster]
+    class-name="kafka"
+    client-profile= "kafka-profile"
+    servers=  ["{{ .Bkservers }}"]
+    topic-refresh=120
+    offset-refresh=10
+[consumer.consumer_kafka]
+    class-name="kafka"
+    cluster="my-cluster"
+    servers= ["{{ .Consumerserver }}"]
+    client-profile="kafka-profile"
+    start-latest=true
+    offsets-topic="__consumer_offsets"
+    group-whitelist=".*"
+    group-blacklist="^(console-consumer-|python-kafka-consumer-).*$"
+[httpserver.default]
+    address=":8000"

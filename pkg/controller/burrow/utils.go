@@ -3,7 +3,7 @@ package burrow
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/BurntSushi/toml"
+	"fmt"
 	monitorsv1beta1 "github.com/subravi92/burrow-operator/pkg/apis/monitors/v1beta1"
 	"io/ioutil"
 	appsv1 "k8s.io/api/apps/v1"
@@ -11,10 +11,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"log"
 	"path/filepath"
+	"strconv"
 	"strings"
-	//	"text/template"
+	"text/template"
 )
 
 const (
@@ -25,7 +25,10 @@ const (
 )
 
 type burrowconfig struct {
-	Keys map[string]map[string]string
+	Bkservers      string
+	Zkservers      string
+	Kafkaversion   string
+	Consumerserver string
 }
 
 //move to the utils.go
@@ -135,8 +138,6 @@ func NewDeployment(instance monitorsv1beta1.Burrow) *appsv1.Deployment {
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      configMapMetaName,
 								MountPath: "/etc/burrow/config",
-
-
 							},
 							},
 						},
@@ -145,20 +146,20 @@ func NewDeployment(instance monitorsv1beta1.Burrow) *appsv1.Deployment {
 							Image: instance.Spec.ExporterImage,
 							Env: []corev1.EnvVar{{
 								Name:  "BURROW_ADDR",
-								Value: "http://localhost:8000",
+								Value: "http://localhost:" + fmt.Sprint(instance.Spec.ApiPort),
 							},
 								{
 									Name:  "METRICS_ADDR",
-									Value: "0.0.0.0:8080",
+									Value: "0.0.0.0:" + fmt.Sprint(instance.Spec.MetricsPort),
 								},
 								{
 									Name:  "INTERVAL",
-									Value: "15",
+									Value: fmt.Sprint(instance.Spec.Interval),
 								},
 
 								{
 									Name:  "API_VERSION",
-									Value: "3",
+									Value: fmt.Sprint(instance.Spec.ApiVersion),
 								},
 							},
 						},
@@ -199,30 +200,31 @@ func NewConfigMap(instance monitorsv1beta1.Burrow) *corev1.ConfigMap {
 		panic(err)
 	}
 
-	//b, err := ioutil.ReadFile("template/burrow.json")
-
-	log.Printf(":%s", burrowconfigmap.Zookeeper)
-
-	//data,err :=  YamlToStruct("tmpldata.yaml")
-
 	configMap := &corev1.ConfigMap{}
 	configMap.APIVersion = "v1"
 	configMap.Kind = "ConfigMap"
 	configMap.Name = configMapName
 	configMap.Namespace = instance.Namespace
-	output := buildInmemoryConfigMap(burrowconfigmap, instance.Spec, *configMap)
 
-	//var cm Burrow
-	buf := new(bytes.Buffer)
-	if err := toml.NewEncoder(buf).Encode(output); err != nil {
-		panic(err)
+	var cm burrowconfig
+	tmp := strings.Split(instance.Spec.Zookeeper.Servers, ",")
+
+	var zkwithquote string
+	for _, s := range tmp {
+
+		zkwithquote += strconv.Quote(s)
+		zkwithquote += ","
 	}
 
-	configMap.Data = map[string]string{
-		"burrow.toml": strings.ToLower(buf.String()),
-	}
+	zkwithquote = TrimSuffix(zkwithquote, ",")
 
-	/*t, err := template.New("cm").ParseFiles("template/burrow-tem.yaml")
+	cm.Zkservers = zkwithquote
+
+	cm.Bkservers = instance.Spec.ConsumerConsumerKafka.Servers
+	cm.Kafkaversion = instance.Spec.ClientProfileKafkaProfile.KafkaVersion
+	cm.Consumerserver = instance.Spec.ConsumerConsumerKafka.Servers
+
+	t, err := template.ParseFiles("config/template/burrow.toml.tmpl")
 	if err != nil {
 		panic(err)
 	}
@@ -230,13 +232,25 @@ func NewConfigMap(instance monitorsv1beta1.Burrow) *corev1.ConfigMap {
 	var tpl bytes.Buffer
 
 	err = t.Execute(&tpl, cm)
+
 	if err != nil {
 		panic(err)
 	}
 
-	result := tpl.String()*/
+	result := tpl.String()
+
+	configMap.Data = map[string]string{
+		"burrow.toml": result,
+	}
 
 	return configMap
+}
+
+func TrimSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		s = s[:len(s)-len(suffix)]
+	}
+	return s
 }
 
 func NewService(instance monitorsv1beta1.Burrow) *corev1.Service {
@@ -250,8 +264,8 @@ func NewService(instance monitorsv1beta1.Burrow) *corev1.Service {
 			Ports: []corev1.ServicePort{
 				{
 					Name:       serviceName,
-					Port:       instance.Spec.ApiPort,
-					TargetPort: intstr.FromInt(int(instance.Spec.ApiPort)),
+					Port:       instance.Spec.MetricsPort,
+					TargetPort: intstr.FromInt(int(instance.Spec.MetricsPort)),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
@@ -319,7 +333,7 @@ func buildInmemoryConfigMap(input Burrow, spec monitorsv1beta1.BurrowConfigSpec,
 	}
 
 	input.Consumer.ConsumerKafka.ClassName = "kafka"
-	log.Printf("%+v", input)
+	//log.Info("%+v", input)
 	return input
 
 }
@@ -346,7 +360,7 @@ func isValidNamespace(namespace string) bool {
 	switch namespace {
 	case "kube-system", "kube-public", "default":
 
-		log.Printf("You are not allowed create in %s Namespace", namespace)
+		log.Info("You are not allowed create in %s Namespace", namespace)
 		return false
 	}
 	return true

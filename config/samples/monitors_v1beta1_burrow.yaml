@@ -5,8 +5,8 @@ metadata:
     controller-tools.k8s.io: "1.0"
   name: burrow-sample
 spec:
-  apiport: 8080
-  metricsport: 8000
+  apiport: 8000
+  metricsport: 8080
   burrowImag: "containers.cisco.com/jaganaga/burrow:1.0"
   exporterImage: "containers.cisco.com/jaganaga/burrow-exporter:1.0"
   zookeeper:

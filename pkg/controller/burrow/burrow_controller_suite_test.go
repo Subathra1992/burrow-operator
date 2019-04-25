@@ -1,13 +1,12 @@
 package burrow
 
 import (
-	"log"
+	"github.com/subravi92/burrow-operator/pkg/apis"
+	glog "log"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
-
-	"github.com/subravi92/burrow-operator/pkg/apis"
 
 	"github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -27,7 +26,7 @@ func TestMain(m *testing.M) {
 
 	var err error
 	if cfg, err = t.Start(); err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 
 	code := m.Run()
